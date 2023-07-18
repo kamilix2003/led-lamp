@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <math.h>
+#include <WiFi.h>
 
 #define BUILTIN_LED 8
 #define NUM_LEDS 60 // Number of leds
@@ -11,6 +12,7 @@
 #define SWITCH_C 4
 #define SWITCH_D 3
 
+// fastled declarations
 CRGB g_LEDs[NUM_LEDS] = {0}; // Frame buffer for FastLED
 int g_brightness = 180;
 const int MAX_BRIGHTNESS = 220;
@@ -18,9 +20,12 @@ const int MIN_BRIGHTNESS = 0;
 int g_maxpower = 1200;
 int g_maxmilliamps = 1800;
 int g_maxvolt = 5;
+
+// brightness declarations
 bool brightness_increase = false;
 bool brightness_direction_switch = false;
 
+// mode declarations
 enum Mode
 {
   BEGIN,
@@ -37,11 +42,17 @@ std::string led_mode_names[3] = {
   "leds off",
 };
 bool led_mode_switch = false;
-  
+
+// rainbow declarations
 int current_hue = 0;
 int hue_step = 3 ;
 int rainbow_timer = 0;
 int rainbow_speed = 50;
+
+// WiFi declarations
+char ssid[] = "*^____^*";
+char password[] = "Kolej12!";
+WiFiServer server(80);
 
 // timeout
 u_int a_timer = 0;
@@ -80,9 +91,30 @@ void setup() {
   FastLED.setBrightness(g_brightness);
   // FastLED.setMaxPowerInMilliWatts(g_maxpower);
   FastLED.setMaxPowerInVoltsAndMilliamps(g_maxvolt, g_maxmilliamps);
+
+  // WiFi
+  while(WiFi.status() != WL_CONNECTED)
+  {
+    WiFi.begin(ssid, password);
+    Serial.printf("connecting to %s\n", ssid);
+    Serial.println(WiFi.status());
+    delay(1000);
+  }
+  server.begin();
 }
 
 void loop() {
+  // listen for incoming clients
+  WiFiClient client = server.available();
+  if (client) {
+
+    if (client.connected()) {
+      Serial.println("Connected to client");
+    }
+
+    // close the connection:
+    client.stop();
+  }
   // switch A handling
   if(digitalRead(SWITCH_A) == LOW && timeout(&a_timer, 200)) 
   {
@@ -126,15 +158,17 @@ void loop() {
     brightness_direction_switch = false;
   }
   // switch D handling
-
+  if(digitalRead(SWITCH_D) == LOW && timeout(&b_timer, 200)) 
+  {
+    Serial.println(WiFi.localIP());
+  }
 
 
   // led update
   switch (led_mode)
   {
     case led_off:
-      FastLED.clear();
-      FastLED.show();
+      FastLED.clear(true);
       break;
     case led_on:
       fill_solid(g_LEDs, NUM_LEDS, CRGB::White);
