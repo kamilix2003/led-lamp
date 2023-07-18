@@ -3,6 +3,9 @@
 #include <math.h>
 #include <WiFi.h>
 
+#include "../include/led_mode.h"
+#include "../include/timeout.h"
+
 #define BUILTIN_LED 8
 #define NUM_LEDS 60 // Number of leds
 #define LED_PIN 5 // Data pin for led strip
@@ -18,7 +21,7 @@ int g_brightness = 180;
 const int MAX_BRIGHTNESS = 220;
 const int MIN_BRIGHTNESS = 0;
 int g_maxpower = 1200;
-int g_maxmilliamps = 1800;
+int g_maxmilliamps = 1500;
 int g_maxvolt = 5;
 
 // brightness declarations
@@ -26,14 +29,6 @@ bool brightness_increase = false;
 bool brightness_direction_switch = false;
 
 // mode declarations
-enum Mode
-{
-  BEGIN,
-  led_off,
-  led_on,
-  led_rainbow,
-  END,
-};
 Mode led_mode = Mode::led_on;
 Mode led_mode_previous;
 std::string led_mode_names[3] = {
@@ -43,35 +38,16 @@ std::string led_mode_names[3] = {
 };
 bool led_mode_switch = false;
 
-// rainbow declarations
-int current_hue = 0;
-int hue_step = 3 ;
-int rainbow_timer = 0;
-int rainbow_speed = 50;
-
 // WiFi declarations
 char ssid[] = "*^____^*";
 char password[] = "Kolej12!";
 WiFiServer server(80);
 
 // timeout
-u_int a_timer = 0;
-u_int b_timer = 0;
-u_int c_timer = 0;
-u_int d_timer = 0;
-bool timeout(u_int* p_timer, u_int timeout_time)
-{
-  if(*p_timer == 0) 
-  {
-    *p_timer = millis();
-    return true;
-  }
-  if((millis() - *p_timer) > timeout_time)
-  {
-    *p_timer = 0;
-  }
-  return false;
-}
+int a_timer = 0;
+int b_timer = 0;
+int c_timer = 0;
+int d_timer = 0;
 
 void setup() {
 
@@ -93,28 +69,28 @@ void setup() {
   FastLED.setMaxPowerInVoltsAndMilliamps(g_maxvolt, g_maxmilliamps);
 
   // WiFi
-  while(WiFi.status() != WL_CONNECTED)
-  {
-    WiFi.begin(ssid, password);
-    Serial.printf("connecting to %s\n", ssid);
-    Serial.println(WiFi.status());
-    delay(1000);
-  }
-  server.begin();
+  // while(WiFi.status() != WL_CONNECTED)
+  // {
+  //   WiFi.begin(ssid, password);
+  //   Serial.printf("connecting to %s\n", ssid);
+  //   Serial.println(WiFi.status());
+  //   delay(1000);
+  // }
+  // server.begin();
 }
 
 void loop() {
   // listen for incoming clients
-  WiFiClient client = server.available();
-  if (client) {
+  // WiFiClient client = server.available();
+  // if (client) {
 
-    if (client.connected()) {
-      Serial.println("Connected to client");
-    }
+  //   if (client.connected()) {
+  //     Serial.println("Connected to client");
+  //   }
 
-    // close the connection:
-    client.stop();
-  }
+  //   // close the connection:
+  //   client.stop();
+  // }
   // switch A handling
   if(digitalRead(SWITCH_A) == LOW && timeout(&a_timer, 200)) 
   {
@@ -171,21 +147,16 @@ void loop() {
       FastLED.clear(true);
       break;
     case led_on:
-      fill_solid(g_LEDs, NUM_LEDS, CRGB::White);
-      FastLED.show();
+      led_mode_solid_color(g_LEDs, NUM_LEDS, CRGB::White);
       break;
     case led_rainbow:
-      fill_rainbow(g_LEDs, NUM_LEDS, current_hue, hue_step);
-      if((millis() - rainbow_timer) > rainbow_speed)
-      {
-        current_hue += hue_step;
-        rainbow_timer = millis();
-        FastLED.show();
-      }
+      led_mode_rainbow(g_LEDs, NUM_LEDS);
+      break;
+    case led_test:
+      led_mode_test(g_LEDs, NUM_LEDS);
       break;
     default:
-      fill_solid(g_LEDs, NUM_LEDS, CRGB::White);
-      FastLED.show();
+      led_mode_solid_color(g_LEDs, NUM_LEDS, CRGB::White);
       break;
   }
 }
