@@ -158,8 +158,12 @@ void loop() {
     case led_police:
       led_mode_police(g_LEDs, NUM_LEDS);
       break;
+    case led_test:
+      led_mode_test(g_LEDs, NUM_LEDS);
+      break;
     default:
       led_mode_solid_color(g_LEDs, NUM_LEDS, CRGB::White);
       break;
   }
+  FastLED.show();
 }
