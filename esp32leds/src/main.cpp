@@ -152,8 +152,11 @@ void loop() {
     case led_rainbow:
       led_mode_rainbow(g_LEDs, NUM_LEDS);
       break;
-    case led_test:
-      led_mode_test(g_LEDs, NUM_LEDS);
+    case led_comet:
+      led_mode_comet(g_LEDs, NUM_LEDS);
+      break;
+    case led_police:
+      led_mode_police(g_LEDs, NUM_LEDS);
       break;
     default:
       led_mode_solid_color(g_LEDs, NUM_LEDS, CRGB::White);
