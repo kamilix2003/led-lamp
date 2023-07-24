@@ -29,7 +29,7 @@ bool brightness_increase = false;
 bool brightness_direction_switch = false;
 
 // mode declarations
-Mode led_mode = Mode::led_on;
+Mode led_mode = Mode::led_test;
 Mode led_mode_previous;
 std::string led_mode_names[3] = {
   "leds white",
@@ -160,6 +160,7 @@ void loop() {
       break;
     case led_test:
       led_mode_test(g_LEDs, NUM_LEDS);
+      // FastLED.show();
       break;
     default:
       led_mode_solid_color(g_LEDs, NUM_LEDS, CRGB::White);

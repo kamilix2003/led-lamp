@@ -67,36 +67,30 @@ void led_mode_police(CRGB* LEDs, int NUM_LEDS)
 }
 
 // test declarations
-int test_timer = 0;
-int test_speed = 200;
 const int PROJECTILES_NUMBER = 2;
 Projectile projectiles[PROJECTILES_NUMBER] =
-    {Projectile(1, 1, 10, 1, 0, CRGB::Blue),
-     Projectile(2, 1, 50, 1, 0, CRGB::Red)};
-int sign_previous = 0;
+    {Projectile(1, 1, 10, 60, CRGB::Blue),
+     Projectile(2, 1, 50, 30, CRGB::Red)};
 
-void collision(Projectile* proj1, Projectile* proj2)
+void collision(Projectile projectiles[], int PROJECTILES_NUMBER)
 {
-    proj1->velocity_ *= -1;
-    proj2->velocity_ *= -1;
-}
-
-bool collision_check(Projectile* proj1, Projectile* proj2)
-{
-    if(proj1->position_ == proj2->position_) {Serial.println("true"); return true;}
-    return false;
+    if(projectiles[0].position_ == projectiles[1].position_)
+    {
+        projectiles[0].velocity_ *= -1;
+        projectiles[1].velocity_ *= -1;
+    }
 }
 
 void led_mode_test(CRGB* LEDs, int NUM_LEDS)
 {
-    if(!timeout(&test_timer, test_speed)) {return; }
-    // fadeToBlackBy(LEDs, NUM_LEDS, 150);
-    FastLED.clear();
-    if(collision_check(&projectiles[0], &projectiles[1])) {collision(&projectiles[0], &projectiles[1]); }
+    fadeToBlackBy(LEDs, NUM_LEDS, 50);
+    // FastLED.clear();
     for(int i = 0; i < PROJECTILES_NUMBER; i++)
     {
+        collision(projectiles, PROJECTILES_NUMBER);
         projectiles[i].update(NUM_LEDS);
-        projectiles[i].print();
         LEDs[projectiles[i].position_] = projectiles[i].color_;
+        // projectiles[i].print();
     }
+    // FastLED.show();
 }
