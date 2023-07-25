@@ -10,11 +10,15 @@ class Projectile
         int ID_;
         int mass_;
         int position_;
-        int velocity_;  //leds per second
+        int velocity_;  //milli leds per second
         int velocity_frequency_;
         CRGB color_ = CRGB::White;
+        int hue_ = 0;
+        int hue_step_ = 0;
 
         Projectile(int, int, int, int, CRGB);
+        Projectile(int, int, int, int, CRGB, int);
+        void set_hue(int, int);
         void update(int);
         void print();
 };
