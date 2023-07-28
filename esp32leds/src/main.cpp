@@ -18,7 +18,7 @@
 // fastled declarations
 CRGB g_LEDs[NUM_LEDS] = {0}; // Frame buffer for FastLED
 int g_brightness = 180;
-const int MAX_BRIGHTNESS = 220;
+const int MAX_BRIGHTNESS = 255;
 const int MIN_BRIGHTNESS = 0;
 int g_maxpower = 1200;
 int g_maxmilliamps = 1500;
@@ -29,19 +29,8 @@ bool brightness_increase = false;
 bool brightness_direction_switch = false;
 
 // mode declarations
-Mode led_mode = Mode::led_on;
+Mode led_mode = Mode::led_test;
 Mode led_mode_previous;
-std::string led_mode_names[3] = {
-  "leds white",
-  "leds rainbow",
-  "leds off",
-};
-bool led_mode_switch = false;
-
-// WiFi declarations
-char ssid[] = "*^____^*";
-char password[] = "Kolej12!";
-WiFiServer server(80);
 
 // timeout
 int a_timer = 0;
@@ -54,6 +43,7 @@ void setup() {
   // pins setup
   pinMode(BUILTIN_LED, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
+  // switch setup
   pinMode(SWITCH_A, INPUT_PULLUP);
   pinMode(SWITCH_B, INPUT_PULLUP);
   pinMode(SWITCH_C, INPUT_PULLUP);
@@ -67,30 +57,9 @@ void setup() {
   FastLED.setBrightness(g_brightness);
   // FastLED.setMaxPowerInMilliWatts(g_maxpower);
   FastLED.setMaxPowerInVoltsAndMilliamps(g_maxvolt, g_maxmilliamps);
-
-  // WiFi
-  // while(WiFi.status() != WL_CONNECTED)
-  // {
-  //   WiFi.begin(ssid, password);
-  //   Serial.printf("connecting to %s\n", ssid);
-  //   Serial.println(WiFi.status());
-  //   delay(1000);
-  // }
-  // server.begin();
 }
 
 void loop() {
-  // listen for incoming clients
-  // WiFiClient client = server.available();
-  // if (client) {
-
-  //   if (client.connected()) {
-  //     Serial.println("Connected to client");
-  //   }
-
-  //   // close the connection:
-  //   client.stop();
-  // }
   // switch A handling
   if(digitalRead(SWITCH_A) == LOW && timeout(&a_timer, 200)) 
   {
@@ -136,9 +105,8 @@ void loop() {
   // switch D handling
   if(digitalRead(SWITCH_D) == LOW && timeout(&b_timer, 200)) 
   {
-    Serial.println(WiFi.localIP());
-  }
 
+  }
 
   // led update
   switch (led_mode)
