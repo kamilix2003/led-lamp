@@ -1,9 +1,5 @@
 # Program for ESP32 driving LED desk light
 ## TODO/features
-1. WI-FI communication
-   - [ ] connetct to network
-   - [ ] send LED strip status
-   - [ ] recive mode changes
 2. led effects
    - [ ] solid color
    - [ ] rainbow

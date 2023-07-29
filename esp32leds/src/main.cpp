@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <math.h>
-#include <WiFi.h>
 
 #include "../include/led_mode.h"
 #include "../include/timeout.h"
@@ -29,7 +28,7 @@ bool brightness_increase = false;
 bool brightness_direction_switch = false;
 
 // mode declarations
-Mode led_mode = Mode::led_test;
+Mode led_mode = Mode::led_on;
 Mode led_mode_previous;
 
 // timeout
@@ -52,11 +51,12 @@ void setup() {
   // serial communication setup
   Serial.begin(115200);
 
-  // fastled setup
+  // FastLed setup
   FastLED.addLeds<WS2812B, LED_PIN, GRB>(g_LEDs, NUM_LEDS);
   FastLED.setBrightness(g_brightness);
   // FastLED.setMaxPowerInMilliWatts(g_maxpower);
   FastLED.setMaxPowerInVoltsAndMilliamps(g_maxvolt, g_maxmilliamps);
+
 }
 
 void loop() {
@@ -127,7 +127,7 @@ void loop() {
       led_mode_police(g_LEDs, NUM_LEDS);
       break;
     case led_test:
-      led_mode_test(g_LEDs, NUM_LEDS);
+      // led_mode_test(g_LEDs, NUM_LEDS);
       break;
     default:
       led_mode_solid_color(g_LEDs, NUM_LEDS, CRGB::White);

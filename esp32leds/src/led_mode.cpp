@@ -66,76 +66,75 @@ void led_mode_police(CRGB* LEDs, int NUM_LEDS)
     police_cycle = !police_cycle;
 }
 
-// test declarations
-const int PROJECTILES_NUMBER = 4;
-Projectile projectiles[PROJECTILES_NUMBER] =
-    {Projectile(1, 1, 10, 2000, CRGB::Blue),
-     Projectile(2, 2, 20, 500, CRGB::Red),
-     Projectile(3, 4, 30, 1000, CRGB::Green),
-     Projectile(4, 6, 40, 5000, CRGB::Green)};
-int print_timer = 0;
-int print_frequency = 500;
-int collision_timer = 0;
+// // test declarations
+// const int PROJECTILES_NUMBER = 3;
+// Projectile projectiles[PROJECTILES_NUMBER] =
+//     {Projectile(1, 1, 10, 2000, CRGB::Blue),
+//      Projectile(2, 2, 20, 500, CRGB::Red),
+//      Projectile(3, 4, 30, 1000, CRGB::Green)};
+// int print_timer = 0;
+// int print_frequency = 500;
+// int collision_timer = 0;
 
-// bool collision_check(Projectile projectiles[], int PROJECTILES_NUMBER)
+// // bool collision_check(Projectile projectiles[], int PROJECTILES_NUMBER)
+// // {
+// //     if()
+// // }
+
+// int max_velocity(Projectile projectiles[], int PROJECTILES_NUMBER)
 // {
-//     if()
+//     int max_vel = 0;
+//     for(int i = 0; i < PROJECTILES_NUMBER; i++)
+//     {
+//         if(max_vel < projectiles[i].velocity_) {max_vel = projectiles[i].velocity_;}
+//     }
+//     return max_vel;
 // }
 
-int max_velocity(Projectile projectiles[], int PROJECTILES_NUMBER)
-{
-    int max_vel = 0;
-    for(int i = 0; i < PROJECTILES_NUMBER; i++)
-    {
-        if(max_vel < projectiles[i].velocity_) {max_vel = projectiles[i].velocity_;}
-    }
-    return max_vel;
-}
+// void collision(Projectile projectiles[], int PROJECTILES_NUMBER)
+// {
+//     for(int i = 0; i < PROJECTILES_NUMBER; i++)
+//     {
+//         for(int j = 0; j < PROJECTILES_NUMBER; j++)
+//         {
+//             if((projectiles[i].position_ - projectiles[j].position_)
+//             *(projectiles[i].position_ - projectiles[j].position_) == 1
+//             && timeout(&collision_timer, max_velocity(projectiles, PROJECTILES_NUMBER)))
+//             {
+//                 // Serial.println("collision!");
+//                 int initial_velocity_0 = projectiles[i].velocity_;
+//                 int initial_velocity_1 = projectiles[j].velocity_;
+//                 int mass_sum = projectiles[i].mass_ + projectiles[j].mass_;
+//                 // projectiles[i].velocity_ *= -1;
+//                 // projectiles[j].velocity_ *= -1;
+//                 projectiles[i].velocity_ = 
+//                     initial_velocity_0*(projectiles[i].mass_ - projectiles[j].mass_)/mass_sum
+//                     + initial_velocity_1*2*projectiles[j].mass_/mass_sum;
+//                 projectiles[j].velocity_ = 
+//                     initial_velocity_0*2*projectiles[i].mass_/mass_sum
+//                     + initial_velocity_1*(projectiles[j].mass_ - projectiles[i].mass_)/mass_sum;
+//             }
+//         }
+//     }
+// }
 
-void collision(Projectile projectiles[], int PROJECTILES_NUMBER)
-{
-    for(int i = 0; i < PROJECTILES_NUMBER; i++)
-    {
-        for(int j = 0; j < PROJECTILES_NUMBER; j++)
-        {
-            if((projectiles[i].position_ - projectiles[j].position_)
-            *(projectiles[i].position_ - projectiles[j].position_) == 1
-            && timeout(&collision_timer, max_velocity(projectiles, PROJECTILES_NUMBER)))
-            {
-                // Serial.println("collision!");
-                int initial_velocity_0 = projectiles[i].velocity_;
-                int initial_velocity_1 = projectiles[j].velocity_;
-                int mass_sum = projectiles[i].mass_ + projectiles[j].mass_;
-                // projectiles[i].velocity_ *= -1;
-                // projectiles[j].velocity_ *= -1;
-                projectiles[i].velocity_ = 
-                    initial_velocity_0*(projectiles[i].mass_ - projectiles[j].mass_)/mass_sum
-                    + initial_velocity_1*2*projectiles[j].mass_/mass_sum;
-                projectiles[j].velocity_ = 
-                    initial_velocity_0*2*projectiles[i].mass_/mass_sum
-                    + initial_velocity_1*(projectiles[j].mass_ - projectiles[i].mass_)/mass_sum;
-            }
-        }
-    }
-}
-
-void led_mode_test(CRGB* LEDs, int NUM_LEDS)
-{
-    fadeToBlackBy(LEDs, NUM_LEDS, 10);
-    // FastLED.clear();
-    for(int i = 0; i < PROJECTILES_NUMBER; i++)
-    {
-        collision(projectiles, PROJECTILES_NUMBER);
-        projectiles[i].update(NUM_LEDS);
-        if(projectiles[i].hue_step_ == 0) {LEDs[projectiles[i].position_] = projectiles[i].color_;}
-        else {LEDs[projectiles[i].position_].setHue(projectiles[i].hue_);}
-        // projectiles[i].print();
-    }
-    // if(timeout(&print_timer, print_frequency)) 
-    // {
-    //     projectiles[0].print();
-    //     projectiles[1].print();
-    //     Serial.println("");
-    // }
-    // FastLED.show();
-}
+// void led_mode_test(CRGB* LEDs, int NUM_LEDS)
+// {
+//     fadeToBlackBy(LEDs, NUM_LEDS, 10);
+//     // FastLED.clear();
+//     for(int i = 0; i < PROJECTILES_NUMBER; i++)
+//     {
+//         collision(projectiles, PROJECTILES_NUMBER);
+//         projectiles[i].update(NUM_LEDS);
+//         if(projectiles[i].hue_step_ == 0) {LEDs[projectiles[i].position_] = projectiles[i].color_;}
+//         else {LEDs[projectiles[i].position_].setHue(projectiles[i].hue_);}
+//         // projectiles[i].print();
+//     }
+//     // if(timeout(&print_timer, print_frequency)) 
+//     // {
+//     //     projectiles[0].print();
+//     //     projectiles[1].print();
+//     //     Serial.println("");
+//     // }
+//     // FastLED.show();
+// }
