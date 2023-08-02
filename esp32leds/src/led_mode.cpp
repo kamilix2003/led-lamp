@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include "../include/led_mode.h"
-#include "../include/timeout.h"
+#include "../include/utility.h"
 #include "../include/projectile.h"
 
 void led_mode_solid_color(CRGB* LEDs, int NUM_LEDS, CRGB color)
@@ -29,13 +29,13 @@ int fade_speed = 100;
 int comet_timer = 0;
 int comet_hue = 0;
 int comet_hue_step = 5;
-int comet_size = 5;
+int comet_size = 1;
 
-void led_mode_comet(CRGB* LEDs, int NUM_LEDS)
+int led_mode_comet(CRGB* LEDs, int NUM_LEDS)
 {
-    if(!timeout(&comet_timer, comet_speed)) {return; }
     static int current_led = 0;
-    if(current_led < 0 || (current_led + comet_size) > NUM_LEDS)
+    if(!timeout(&comet_timer, comet_speed)) {return current_led; }
+    if(current_led < 0 || (current_led + comet_size + 1) > NUM_LEDS)
     {
         led_step *= -1;
     }
@@ -47,6 +47,7 @@ void led_mode_comet(CRGB* LEDs, int NUM_LEDS)
     {
         LEDs[current_led+i].setHue(comet_hue);
     }
+    return current_led;
 }
 
 // police declarations

@@ -1,5 +1,5 @@
 #include "../include/projectile.h"
-#include "../include/timeout.h"
+#include "../include/utility.h"
 
 Projectile::Projectile(int ID, int mass, int pos, int vel, CRGB color)
 {
