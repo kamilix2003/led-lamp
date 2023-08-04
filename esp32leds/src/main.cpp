@@ -2,6 +2,7 @@
 #include <FastLED.h>
 #include <math.h>
 #include <LiquidCrystal_I2C.h>
+#include <Encoder.h>
 
 #include "../include/led_mode.h"
 #include "../include/utility.h"
@@ -17,6 +18,9 @@
 #define SWITCH_C 1
 #define SWITCH_D 2
 
+#define ENCODER_BUTTON 3
+#define ENCODER_A 6
+#define ENCODER_B 4
 
 // fastled declarations
 CRGB g_LEDs[NUM_LEDS] = {0}; // Frame buffer for FastLED
@@ -45,6 +49,25 @@ int c_timer = 0;
 int d_timer = 0;
 int display_uptdate_timer = 0;
 
+// Encoder
+enum Encoder_mode{
+    ENCODER_BEGIN,
+    ENCODER_mode = 0,
+    ENCODER_brightness,
+    ENCODER_temperature,
+    ENCODER_lcd_backlight,
+    ENCODER_led_off,
+    ENCODER_END,
+}encoder_display;
+
+enum Encoder_rotation{
+    ENCODER_stop,
+    ENCODER_right,
+    ENCODER_left,
+}encoder_rotation;
+
+
+
 void setup() {
   // pins setup
   pinMode(BUILTIN_LED, OUTPUT);
@@ -54,7 +77,7 @@ void setup() {
   pinMode(SWITCH_B, INPUT_PULLUP);
   pinMode(SWITCH_C, INPUT_PULLUP);
   pinMode(SWITCH_D, INPUT_PULLUP);
-  
+
   // serial communication setup
   Serial.begin(115200);
 
@@ -74,10 +97,10 @@ void setup() {
   FastLED.setBrightness(led_brightness);
   // FastLED.setMaxPowerInMilliWatts(g_maxpower);
   FastLED.setMaxPowerInVoltsAndMilliamps(g_maxvolt, g_maxmilliamps);
-
 }
-int test;
+
 void loop() {
+
   // switch A handling
   if(digitalRead(SWITCH_A) == LOW && timeout(&a_timer, 200)) 
   {
@@ -93,44 +116,36 @@ void loop() {
   // switch B handling
   if(digitalRead(SWITCH_B) == LOW && timeout(&b_timer, 200)) 
   {
-    cycle_enum(&led_mode);
+    led_mode = (Mode)((int)led_mode+1);
+    if(led_mode == Mode::END) {led_mode = (Mode)((int)Mode::BEGIN+1);}
     update_display = true;
-  }
-
-  // switch C handling
-  if(digitalRead(SWITCH_C) == LOW && timeout(&c_timer, 10))
-  {
-    increment_brightness(&led_brightness, brightness_increment_direction);
-    FastLED.setBrightness(led_brightness);
-    brightness_direction_switch = true;
-    update_display = true;
-  }
-  if(digitalRead(SWITCH_C) == HIGH && brightness_direction_switch)
-  {
-    brightness_increment_direction = !brightness_increment_direction;
-    brightness_direction_switch = false;
-  }
-  // switch D handling
-  if(digitalRead(SWITCH_D) == LOW && timeout(&b_timer, 200)) 
-  {
-    if(backlight) {lcd.noBacklight();}
-    else {lcd.backlight();}
-    backlight = !backlight;
   }
 
   // display
   if(update_display)
   {
-    Serial.println("LCD update");
-    lcd.setCursor(10, 0);
-    lcd.print((int)led_mode);
-    lcd.setCursor(2, 1);
-    lcd.print("   ");
-    lcd.setCursor(2, 1);
-    lcd.print(led_brightness);
-    lcd.setCursor(6, 1);
-    if(!brightness_increment_direction) {lcd.print("increasing");}
-    else {lcd.print("decreasing");}
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    switch(encoder_display)
+      {
+      case ENCODER_mode:
+        lcd.print("Led Mode: ");
+        lcd.print((int)led_mode);
+        break;
+      case ENCODER_brightness:
+        lcd.print("Brightness: ");
+        lcd.print(led_brightness);
+        break;
+      case ENCODER_temperature:
+        lcd.print("Temperature: ");
+        break;
+      case ENCODER_lcd_backlight:
+        lcd.print("Lcd backlight: ");
+        break;
+      case ENCODER_led_off:
+        lcd.print("Led off: ");
+        break;
+      }
     update_display = false;
   }
 
