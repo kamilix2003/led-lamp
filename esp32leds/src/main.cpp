@@ -2,11 +2,8 @@
 #include <FastLED.h>
 #include <math.h>
 #include <LiquidCrystal_I2C.h>
-#include <Encoder.h>
 
-#include "../include/led_mode.h"
 #include "../include/utility.h"
-#include "../include/brightness.h"
 #include "../include/emotes.h"
 
 #define BUILTIN_LED 8
@@ -15,164 +12,219 @@
 
 #define SWITCH_A 0
 #define SWITCH_B 10
-#define SWITCH_C 1
-#define SWITCH_D 2
 
-#define ENCODER_BUTTON 3
-#define ENCODER_A 6
-#define ENCODER_B 4
-
-// fastled declarations
-CRGB g_LEDs[NUM_LEDS] = {0}; // Frame buffer for FastLED
-int led_brightness = 180;
-int g_maxpower = 1200;
-int g_maxmilliamps = 1500;
-int g_maxvolt = 5;
-
-// mode declarations
-Mode led_mode = Mode::led_on;
-Mode led_mode_previous;
-
-// brightness declarations
-bool brightness_increment_direction = false;
-bool brightness_direction_switch = false;
-
-// LCD declarations
 LiquidCrystal_I2C lcd(0x27, 16, 2);
-bool update_display = true;
-bool backlight = true;
 
-// timeout
-int a_timer = 0;
-int b_timer = 0;
-int c_timer = 0;
-int d_timer = 0;
-int display_uptdate_timer = 0;
+enum Led_effects
+{
+  led_effects_off = 0,
+  led_effects_solid,
+  led_effects_rainbow,
+  led_effects_END
+};
 
-// Encoder
-enum Encoder_mode{
-    ENCODER_BEGIN,
-    ENCODER_mode = 0,
-    ENCODER_brightness,
-    ENCODER_temperature,
-    ENCODER_lcd_backlight,
-    ENCODER_led_off,
-    ENCODER_END,
-}encoder_display;
+char* led_effects_name[] =
+{
+  "off",
+  "solid",
+  "rainbow",
+};
+struct Led
+{
+  const int pin = LED_PIN;
+  const int led_count = NUM_LEDS;
+  CRGB buffer[NUM_LEDS] = {0};
 
-enum Encoder_rotation{
-    ENCODER_stop,
-    ENCODER_right,
-    ENCODER_left,
-}encoder_rotation;
+  bool pause_update = false;
+  Led_effects mode = Led_effects::led_effects_off;
+  Led_effects temp = Led_effects::led_effects_solid;
+  
+  int brightness = 200;
+  const int max_brightness = 255;
+  const int min_brightness = 0;
 
+  int rainbow_hue = 0;
+  const int rainbow_hue_step = 10;
+  int rainbow_timer = 0;
+  const int rainbow_speed = 50;
 
+  /// @brief updates led strip from the buffer
+  void update()
+  {
+    switch(mode)
+    {
+      case Led_effects::led_effects_off:
+      led_off();
+      break;
+
+      case Led_effects::led_effects_solid:
+      led_solid(CRGB::White);
+      break;
+
+      case Led_effects::led_effects_rainbow:
+      led_rainbow();
+      break;
+    }
+    if(!pause_update){FastLED.show();}
+  }
+  /// @brief switches to led_effect_off and switches back to previous effect when called again
+  void off_effect()
+  {
+    if(mode == Led_effects::led_effects_off)
+      {mode = temp; return;}
+    temp = mode;
+    mode = Led_effects::led_effects_off;
+  }
+  /// @brief cycles through effects
+  void next_effect()
+  {
+    mode = (Led_effects)((int)mode + 1);
+    if(mode == Led_effects::led_effects_END) {mode = (Led_effects)0;}
+  }
+  void increase_brightness(int multiplier)
+  {
+    brightness += multiplier;
+    if(brightness > max_brightness) {brightness = min_brightness;}
+    FastLED.setBrightness(brightness);
+  }
+  // void decrease_brightness(int multiplier)
+  // {
+  //   brightness -= multiplier;
+  //   if(brightness < min_brightness) {brightness = min_brightness;}
+  // }
+
+  // effects
+  void led_off()
+  {
+    FastLED.clear(true);
+  }
+
+  void led_solid(CRGB color)
+  {
+    fill_solid(buffer, led_count, color);
+    FastLED.show();
+  }
+
+  void led_rainbow()
+  {
+    if(!timeout(&rainbow_timer, rainbow_speed)) {return; }
+    fill_rainbow(buffer, led_count, rainbow_hue, rainbow_hue_step);
+    rainbow_hue += rainbow_hue_step;
+  }
+
+}led_strip;
+
+// Button
+struct Button
+{
+  int pin;
+  int debaunce_timer = 0;
+}button_a, button_b;
+
+// Lcd
+enum Display_selection
+{
+  DISPLAY_led_mode = 0,
+  DISPLAY_led_brigthnesss,
+  DISPLAY_END
+};
+char* display_selection_names[] =
+{
+  "Led mode",
+  "Brightness"
+};
+struct Display
+{
+  LiquidCrystal_I2C core_display = lcd;
+  int backlight = 90;
+  const  int max_backlight = 255;
+  const  int min_backlight = 0;
+
+  bool to_update = false;
+  int periodic_update_timer = 0;
+  const  int periodic_update_time = 10000;
+
+  Display_selection mode = Display_selection::DISPLAY_led_mode;
+
+  void next_selection()
+  {
+    mode = (Display_selection)((int)mode + 1);
+    if(mode == Display_selection::DISPLAY_END) {mode = (Display_selection)0;}
+  }
+
+    void increase_backlight(int multiplier)
+  {
+    backlight += multiplier;
+    if(backlight > max_backlight) {backlight = min_backlight;}
+  }
+
+  void update()
+  {
+    if(!to_update && !timeout(&periodic_update_timer, periodic_update_time)) {return; }
+    lcd.clear();
+    lcd.home();
+    lcd.print(display_selection_names[(int)mode]);
+    switch(mode)
+    {
+      case Display_selection::DISPLAY_led_mode:
+      lcd.print(":");
+      lcd.setCursor(0, 1);
+      lcd.print(led_effects_name[(int)led_strip.mode]);
+      break;
+
+      case Display_selection::DISPLAY_led_brigthnesss:
+      lcd.print(": ");
+      lcd.print(led_strip.brightness);
+      break;
+    }
+    to_update = false;
+  }
+}display;
+
+void IRAM_ATTR button_a_interrupt()
+{
+  if(!timeout(&button_a.debaunce_timer, 3)) {return;}
+  display.next_selection();
+  display.to_update = true;
+}
+
+void IRAM_ATTR button_b_interrupt()
+{
+  if(!timeout(&button_b.debaunce_timer, 3)) {return;}
+  switch (display.mode)
+  {
+    case Display_selection::DISPLAY_led_mode:
+    led_strip.next_effect();
+    break;
+
+    case Display_selection::DISPLAY_led_brigthnesss:
+    led_strip.increase_brightness(10);
+    break;
+  }
+  display.to_update = true;
+}
 
 void setup() {
-  // pins setup
+  Serial.begin();
+
   pinMode(BUILTIN_LED, OUTPUT);
   pinMode(LED_PIN, OUTPUT);
-  // switch setup
   pinMode(SWITCH_A, INPUT_PULLUP);
   pinMode(SWITCH_B, INPUT_PULLUP);
-  pinMode(SWITCH_C, INPUT_PULLUP);
-  pinMode(SWITCH_D, INPUT_PULLUP);
 
-  // serial communication setup
-  Serial.begin(115200);
+  button_a.pin = SWITCH_A;
+  button_b.pin = SWITCH_B;
 
-  // LCD setup
   lcd.init();
-  lcd.createChar(0, bulb);
   lcd.setBacklight(150);
-  lcd.setCursor(0, 0);
-  lcd.print("Led mode: ");
-  lcd.setCursor(0, 1);
-  // lcd.print("Brightness: ");
-  lcd.write(0);
-  lcd.print(":");
 
-  // FastLed setup
-  FastLED.addLeds<WS2812B, LED_PIN, GRB>(g_LEDs, NUM_LEDS);
-  FastLED.setBrightness(led_brightness);
-  // FastLED.setMaxPowerInMilliWatts(g_maxpower);
-  FastLED.setMaxPowerInVoltsAndMilliamps(g_maxvolt, g_maxmilliamps);
+  attachInterrupt(button_a.pin, button_a_interrupt, FALLING);
+  attachInterrupt(button_b.pin, button_b_interrupt, FALLING);
+
+  FastLED.addLeds<WS2812B, LED_PIN, GRB>(led_strip.buffer, NUM_LEDS);
 }
 
 void loop() {
-
-  // switch A handling
-  if(digitalRead(SWITCH_A) == LOW && timeout(&a_timer, 200)) 
-  {
-    if(led_mode == Mode::led_off) {led_mode = led_mode_previous;}
-    else 
-    {
-      led_mode_previous = led_mode;
-      led_mode = Mode::led_off;
-    }
-    update_display = true;
-  }
-  
-  // switch B handling
-  if(digitalRead(SWITCH_B) == LOW && timeout(&b_timer, 200)) 
-  {
-    led_mode = (Mode)((int)led_mode+1);
-    if(led_mode == Mode::END) {led_mode = (Mode)((int)Mode::BEGIN+1);}
-    update_display = true;
-  }
-
-  // display
-  if(update_display)
-  {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    switch(encoder_display)
-      {
-      case ENCODER_mode:
-        lcd.print("Led Mode: ");
-        lcd.print((int)led_mode);
-        break;
-      case ENCODER_brightness:
-        lcd.print("Brightness: ");
-        lcd.print(led_brightness);
-        break;
-      case ENCODER_temperature:
-        lcd.print("Temperature: ");
-        break;
-      case ENCODER_lcd_backlight:
-        lcd.print("Lcd backlight: ");
-        break;
-      case ENCODER_led_off:
-        lcd.print("Led off: ");
-        break;
-      }
-    update_display = false;
-  }
-
-  // led update
-  switch (led_mode)
-  {
-    case led_off:
-      FastLED.clear(true);
-      break;
-    case led_on:
-      led_mode_solid_color(g_LEDs, NUM_LEDS, CRGB::White);
-      break;
-    case led_rainbow:
-      led_mode_rainbow(g_LEDs, NUM_LEDS);
-      break;
-    case led_comet:
-      led_mode_comet(g_LEDs, NUM_LEDS);
-      break;
-    case led_police:
-      led_mode_police(g_LEDs, NUM_LEDS);
-      break;
-    case led_test:
-      // led_mode_test(g_LEDs, NUM_LEDS);
-      break;
-    default:
-      led_mode_solid_color(g_LEDs, NUM_LEDS, CRGB::White);
-      break;
-  }
-  FastLED.show();
+  led_strip.update();
+  display.update();
 }
