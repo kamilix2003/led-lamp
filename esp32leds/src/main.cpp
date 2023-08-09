@@ -30,13 +30,51 @@ char* led_effects_name[] =
   "rainbow",
 };
 
-const int TEMPERATURE_COUNT = 4;
+const int TEMPERATURE_COUNT = 19;
 const CRGB temperatures[TEMPERATURE_COUNT] = 
 {
-  ColorTemperature::DirectSunlight,
-  ColorTemperature::Candle,
-  ColorTemperature::HighNoonSun,
-  ColorTemperature::OvercastSky
+    ColorTemperature::Candle, /* 1900 K, 255, 147, 41 */
+    ColorTemperature::Tungsten40W, /* 2600 K, 255, 197, 143 */
+    ColorTemperature::Tungsten100W, /* 2850 K, 255, 214, 170 */
+    ColorTemperature::Halogen, /* 3200 K, 255, 241, 224 */
+    ColorTemperature::CarbonArc, /* 5200 K, 255, 250, 244 */
+    ColorTemperature::HighNoonSun, /* 5400 K, 255, 255, 251 */
+    ColorTemperature::DirectSunlight, /* 6000 K, 255, 255, 255 */
+    ColorTemperature::OvercastSky, /* 7000 K, 201, 226, 255 */
+    ColorTemperature::ClearBlueSky, /* 20000 K, 64, 156, 255 */
+    ColorTemperature::WarmFluorescent, /* 0 K, 255, 244, 229 */
+    ColorTemperature::StandardFluorescent, /* 0 K, 244, 255, 250 */
+    ColorTemperature::CoolWhiteFluorescent, /* 0 K, 212, 235, 255 */
+    ColorTemperature::FullSpectrumFluorescent, /* 0 K, 255, 244, 242 */
+    ColorTemperature::GrowLightFluorescent, /* 0 K, 255, 239, 247 */
+    ColorTemperature::BlackLightFluorescent, /* 0 K, 167, 0, 255 */
+    ColorTemperature::MercuryVapor, /* 0 K, 216, 247, 255 */
+    ColorTemperature::SodiumVapor, /* 0 K, 255, 209, 178 */
+    ColorTemperature::MetalHalide, /* 0 K, 242, 252, 255 */
+    ColorTemperature::HighPressureSodium, /* 0 K, 255, 183, 76 */
+};
+
+char* led_temperature_name[] =
+{
+  "Candle",
+  "Tungsten40W",
+  "Tungsten100W",
+  "Halogen",
+  "CarbonArc",
+  "HighNoonSun",
+  "DirectSunlight",
+  "OvercastSky",
+  "ClearBlueSky",
+  "WarmFluorescent",
+  "StandardFluorescent",
+  "CoolWhiteFluorescent",
+  "FullSpectrumFluorescent",
+  "GrowLightFluorescent",
+  "BlackLightFluorescent",
+  "MercuryVapor",
+  "SodiumVapor",
+  "MetalHalide",
+  "HighPressureSodium",
 };
 struct Led
 {
@@ -101,7 +139,7 @@ struct Led
   void next_temperature()
   {
     temperature_index++;
-    if(temperature_index > TEMPERATURE_COUNT) {temperature_index = 0;}
+    if(temperature_index >= TEMPERATURE_COUNT) {temperature_index = 0;}
   }
   // void decrease_brightness(int multiplier)
   // {
@@ -198,7 +236,8 @@ struct Display
 
       case Display_selection::DISPLAY_led_temperature:
       lcd.print(": ");
-      lcd.print(led_strip.temperature_index);
+      lcd.setCursor(0, 1);
+      lcd.print(led_temperature_name[led_strip.temperature_index]);
     }
     to_update = false;
   }
