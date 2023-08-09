@@ -29,6 +29,15 @@ char* led_effects_name[] =
   "solid",
   "rainbow",
 };
+
+const int TEMPERATURE_COUNT = 4;
+const CRGB temperatures[TEMPERATURE_COUNT] = 
+{
+  ColorTemperature::DirectSunlight,
+  ColorTemperature::Candle,
+  ColorTemperature::HighNoonSun,
+  ColorTemperature::OvercastSky
+};
 struct Led
 {
   const int pin = LED_PIN;
@@ -42,6 +51,8 @@ struct Led
   int brightness = 200;
   const int max_brightness = 255;
   const int min_brightness = 0;
+
+  int temperature_index = 0;
 
   int rainbow_hue = 0;
   const int rainbow_hue_step = 10;
@@ -87,6 +98,11 @@ struct Led
     if(brightness > max_brightness) {brightness = min_brightness;}
     FastLED.setBrightness(brightness);
   }
+  void next_temperature()
+  {
+    temperature_index++;
+    if(temperature_index > TEMPERATURE_COUNT) {temperature_index = 0;}
+  }
   // void decrease_brightness(int multiplier)
   // {
   //   brightness -= multiplier;
@@ -99,9 +115,10 @@ struct Led
     FastLED.clear(true);
   }
 
-  void led_solid(CRGB color)
+  void led_solid(CRGB RGBcolor)
   {
-    fill_solid(buffer, led_count, color);
+    RGBcolor = temperatures[temperature_index];
+    fill_solid(buffer, led_count, RGBcolor);
     FastLED.show();
   }
 
@@ -126,12 +143,14 @@ enum Display_selection
 {
   DISPLAY_led_mode = 0,
   DISPLAY_led_brigthnesss,
+  DISPLAY_led_temperature,
   DISPLAY_END
 };
 char* display_selection_names[] =
 {
   "Led mode",
-  "Brightness"
+  "Brightness",
+  "Temperature"
 };
 struct Display
 {
@@ -176,6 +195,10 @@ struct Display
       lcd.print(": ");
       lcd.print(led_strip.brightness);
       break;
+
+      case Display_selection::DISPLAY_led_temperature:
+      lcd.print(": ");
+      lcd.print(led_strip.temperature_index);
     }
     to_update = false;
   }
@@ -199,6 +222,10 @@ void IRAM_ATTR button_b_interrupt()
 
     case Display_selection::DISPLAY_led_brigthnesss:
     led_strip.increase_brightness(10);
+    break;
+    
+    case Display_selection::DISPLAY_led_temperature:
+    led_strip.next_temperature();
     break;
   }
   display.to_update = true;
