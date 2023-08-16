@@ -194,12 +194,14 @@ struct Display
 {
   LiquidCrystal_I2C core_display = lcd;
   int backlight = 90;
-  const  int max_backlight = 255;
-  const  int min_backlight = 0;
+  const int max_backlight = 255;
+  const int min_backlight = 0;
+
+  bool pause_update = false;
 
   bool to_update = false;
   int periodic_update_timer = 0;
-  const  int periodic_update_time = 10000;
+  const int periodic_update_time = 10000;
 
   Display_selection mode = Display_selection::DISPLAY_led_mode;
 
@@ -217,7 +219,11 @@ struct Display
 
   void update()
   {
-    if(!to_update && !timeout(&periodic_update_timer, periodic_update_time)) {return; }
+    if(pause_update) {lcd.setBacklight(0);}
+    else {lcd.setBacklight(backlight);}
+    if(timeout(&periodic_update_timer, periodic_update_time)&& !pause_update) {pause_update = true;}
+    if(!to_update) {return; }
+    pause_update = false;
     lcd.clear();
     lcd.home();
     lcd.print(display_selection_names[(int)mode]);
