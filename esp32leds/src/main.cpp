@@ -252,6 +252,8 @@ struct Display
 void IRAM_ATTR button_a_interrupt()
 {
   if(!timeout(&button_a.debaunce_timer, 3)) {return;}
+  if(display.pause_update) {display.pause_update = false; return;}
+  else {display.periodic_update_timer = millis();}
   display.next_selection();
   display.to_update = true;
 }
@@ -259,6 +261,8 @@ void IRAM_ATTR button_a_interrupt()
 void IRAM_ATTR button_b_interrupt()
 {
   if(!timeout(&button_b.debaunce_timer, 3)) {return;}
+  if(display.pause_update) {display.pause_update = false; return;}
+  else {display.periodic_update_timer = millis();}
   switch (display.mode)
   {
     case Display_selection::DISPLAY_led_mode:
